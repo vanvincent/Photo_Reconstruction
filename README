@@ -1,0 +1,15 @@
+In the project 1, we aim to combine 3 gray image (each represent one channel in R,G,B) to a 3 channels RGB colorful image. The main challenge is the positions of images are not strictly matched, so it needs a 2D affine transfer for the pixels.
+The project used images downloaded at http://www.loc.gov/exhibits as input. There are three images contained in the input image, so as the prestep, we use matlab to separate them into three equally sized images B,G,R, respectively. So now we have three gray images as our input.
+The following is our main steps of image process.
+	Rescale the image to the α size of the original gray image (in practice we choose α as 0.5).
+	We selected B channel image as our base image, which means G and R images are needed to transfer to the match all the pixels to their equal positions in B.
+	Apply vlsift and matches functions from VLfeat 0.9.19 to B and G images inorder to find their match points.
+	Using the point pairs from step 3, rotate and transfer matrix R and T are need to figure out. A ransac method is applied to find the best fit R and T. For each loop, we selected 3 random points pair to calculate the original R and T. The original matrix are applied to all the points to get their target points position. A SSD error is got and averaged. Inlier is judged by comparing error with threshold th and if the count of inliers larger than the good number: num, the inlier is kept.
+In practice, th is selected as 6 , num is selected as the 60% of number of matched pairs and iteration times are set as 10000.
+	After all the iterations, the inlier with least error is got and refited to get best R,T.
+	As best R,T is derived, a transfer operation Y=RX+T is applied to all the pixels in image G to form a new image named G’.
+	Repeat step 3 to 6 on the image B and R to get the new image B’.
+	Since the brightness of 3 images are different, matlab function histeq is applied to R’ and B images to make their brightness match with G’
+	Combined R’G’B images into a colorful image, cut approximate 8% boundary to avoid the channel lose on the boundary. 
+
+We applied our process to most of the photos taken by Prokudin and get the decent results. Most result images are vivid, clear and without obvious mismatch. The result proves the powerfulness of ransac for matrix estimation, also we need to thank VLfeat provides high quality sift and match procedure.
